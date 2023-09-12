@@ -1,0 +1,115 @@
+﻿Use UI
+
+Class cMSGraphAPI is a cObject
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        
+        Property Handle  phoHttp
+        Property String  psGraphHost     "graph.microsoft.com"
+        Property String  psGraphBasePath "v1.0/"
+        Property String  psGraphBetaPath "beta/"
+        Property String  psGraphScopes   ""
+        Property Boolean pbUseBeta       False
+    End_Procedure
+    
+    Function GraphPath Returns String
+        If (pbUseBeta(Self)) ;
+            Function_Return (psGraphBetaPath(Self))
+        Else ;
+            Function_Return (psGraphBasePath(Self))
+    End_Function
+    
+    Function GetEvents String sCalendar String sParams Returns Handle
+        Handle hoEvents
+        String sPath
+        
+        If (sCalendar = "") ;
+            Move (GraphPath(Self) + "me/events") to sPath
+        Else ;
+            Move (GraphPath(Self) + "me/calendars/" + sCalendar + "/events") to sPath
+        
+        Get MakeJsonCall of (phoHttp(Self)) "GET" sPath sParams 0 to hoEvents
+        Function_Return hoEvents
+    End_Function
+    
+    Function GetEventAttachments String sID String sParams Returns Handle
+        String sPath
+        Handle hoAtts
+        
+        Move (GraphPath(Self) + "me/events/" + sID + "/attachments") to sPath
+        Get MakeJsonCall of (phoHttp(Self)) "GET" sPath sParams 0 to hoAtts
+        
+        Function_Return hoAtts
+    End_Function
+    
+    Function SendMail Handle hoMessage String sParams Returns Handle
+        String sPath
+        Handle hoResp
+        
+        Move (GraphPath(Self) + "me/sendMail") to sPath
+        
+        Get MakeJsonCall of (phoHttp(Self)) "POST" sPath sParams hoMessage to hoResp  // Will be -1 if OK, 0 if not
+        
+        Function_Return hoResp
+    End_Function
+    
+    Function CreateDraftMail Handle hoMessage String sParams Returns Handle
+        String sPath
+        Handle hoResp
+        
+        Move (GraphPath(Self) + "me/messages") to sPath
+        
+        Get MakeJsonCall of (phoHttp(Self)) "POST" sPath sParams hoMessage to hoResp
+        
+        Function_Return hoResp
+    End_Function
+    
+    Function ListContacts String sParams Returns Handle
+        String sPath
+        Handle hoResp
+        
+        Move (GraphPath(Self) + "me/contacts") to sPath
+        
+        Get MakeJsonCall of (phoHttp(Self)) "GET" sPath sParams 0 to hoResp
+        
+        Function_Return hoResp
+    End_Function
+    
+    Function ListMailFolders String sParams Returns Handle
+        String sPath
+        Handle hoResp
+        
+        Move (GraphPath(Self) + "me/mailFolders") to sPath
+        
+        Get MakeJsonCall of (phoHttp(Self)) "GET" sPath sParams 0 to hoResp
+                
+        Function_Return hoResp
+    End_Function
+    
+    Function ListMessages String sFolder String sParams Returns Handle
+        String sPath
+        Handle hoResp
+        
+        If (sFolder = "") ;
+            Move (GraphPath(Self) + "me/messages") to sPath
+        Else ;
+            Move (GraphPath(Self) + "me/mailFolders/" + sFolder + "/messages") to sPath
+        
+        Get MakeJsonCall of (phoHttp(Self)) "GET" sPath sParams 0 to hoResp
+        
+        Function_Return hoResp
+    End_Function
+    
+    Function Message String sID String sParams Returns Handle
+        String sPath
+        Handle hoResp
+        
+        Move (GraphPath(Self) + "me/messages/" + sID) to sPath
+        
+        Get MakeJsonCall of (phoHttp(Self)) "GET" sPath sParams to hoResp
+        
+        Function_Return hoResp
+    End_Function
+    
+End_Class

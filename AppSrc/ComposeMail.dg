@@ -1,0 +1,418 @@
+﻿Use Windows.pkg
+Use DFClient.pkg
+Use cTextEdit.pkg
+Use cCJGrid.pkg
+Use cCJGridColumn.pkg
+Use GraphStructs\stMailMessages.pkg
+Use GraphStructs\stDraftMessage.pkg
+Use File_dlg.pkg
+Use seq_chnl.pkg
+Use ContactsPrompt.dg
+Use JsonConvFuncs.pkg
+
+Register_Procedure Set pbUseBeta Boolean bTrue
+
+#IFNDEF C_CRLF
+    Define C_CRLF for (Character(13) + Character(10))
+#ENDIF
+
+Object oComposeMail is a ModalPanel
+    Set Size to 263 512
+    Set Label to "Compose Mail"
+    Set piMinSize to 89 211
+    Set Location to 2 2
+    Set Border_Style To Border_Thick
+    Set Locate_Mode to CENTER_ON_PANEL
+    
+    Property stMailMessagesattachments[] patAttachments
+    Property Integer[] paiAttSizes
+    
+    Procedure ClearView
+        stMailMessagesattachments[] atEmpty
+        Integer[] aiEmpty
+        
+        Set Value of oTo        to ""
+        Set Value of oCC        to ""
+        Set Value of oBCC       to ""
+        Set Value of oSubject   to ""
+        Set Value of oBody      to ""
+        Set patAttachments      to atEmpty
+        Set paiAttSizes         to aiEmpty
+        Send ListAttachments of oAttachments
+    End_Procedure
+    
+    Procedure AddAddress Handle hoObj
+        stRecip tRecip
+        String  sVal
+        
+        If not (IsLoggedIn(Self)) ;
+            Procedure_Return
+        
+        Send Popup    of oContactsPrompt
+        Get ptRecip   of oContactsPrompt to tRecip
+        
+        Get Value of hoObj to sVal
+        If (sVal <> "") ;
+            Move (sVal + ", ") to sVal
+        If (tRecip.sName = "") ;
+            Move (sVal + tRecip.sEMail) to sVal
+        Else ;
+            Move (sVal + tRecip.sName + " <" + tRecip.sEMail + ">") to sVal
+        Set Value of hoObj to sVal
+    End_Procedure
+    
+    Object oOpenAtts is an OpenDialog
+        Set Dialog_Caption to "Select Attachment(s)"
+        Set MultiSelect_State to True
+    End_Object
+    
+    Procedure AddAttachment
+        stMailMessagesattachments[] atAtts
+        Integer   iRes iNext i iMax iChn iPos
+        Integer[] aiSizes
+        String[]  asFiles
+        UChar[]   ucaFile
+        
+        Get Show_Dialog of oOpenAtts to iRes
+        
+        If not iRes ;
+            Procedure_Return
+        
+        Get Selected_Files of oOpenAtts to asFiles
+        
+        Get patAttachments              to atAtts
+        Move (SizeOfArray(atAtts))      to iNext
+        Get paiAttSizes                 to aiSizes
+        
+        Move (SizeOfArray(asFiles) - 1) to iMax
+        
+        For i from 0 to iMax
+            Get Seq_New_Channel to iChn
+            Direct_Input channel iChn ("binary:" + asFiles[i])
+            Read_Block channel iChn ucaFile -1
+            Close_Input channel iChn
+            Send Seq_Release_Channel iChn
+            
+            Move (RightPos("\", asFiles[i]))                        to iPos
+            Move (Right(asFiles[i], (Length(asFiles[i]) - iPos)))   to atAtts[iNext].name
+            Move (Base64EncodeUCharArray(oCharTr(Self), ucaFile))   to ucaFile
+            Move (UCharArrayToString(ucaFile))                      to atAtts[iNext].contentBytes
+            Move (MimeType(asFiles[i]))                             to atAtts[iNext].contentType
+            Move (Length(atAtts[iNext].contentBytes))               to aiSizes[iNext]
+            Move "#microsoft.graph.fileAttachment"                  to atAtts[iNext].@odata_type
+            Increment iNext
+        Loop
+        
+        Set paiAttSizes    to aiSizes
+        Set patAttachments to atAtts
+        Send ListAttachments of oAttachments
+    End_Procedure
+    
+    Function ConstructMsg Returns Handle
+        Handle  hoJson hoMsg hoRecips hoBody hoAtts
+        Boolean bHtml bSaveInSent
+        String  sBody
+        stMailMessagesToRecipients[] atRecips
+        stMailMessagesattachments[] atAtts
+        
+        If not (IsLoggedIn(Self)) ;
+            Function_Return 0
+        
+        // Check we have the minimum
+        If (Value(oTo(Self)) = "") Begin
+            Send UserError 'You must enter at least one "To" recipient' 'No "To" recipients'
+            Function_Return 0
+        End
+        
+        // Create message JSON
+        Get Create (RefClass(cJsonObject))  to hoMsg
+        Send InitializeJsonType of hoMsg jsonTypeObject
+        
+        // Subject
+        Send SetMemberValue of hoMsg "subject" jsonTypeString (Value(oSubject(Self)))
+        
+        // Body:
+        Get Value of oBody to sBody
+        Get Checked_State of oHtml to bHtml
+        If bHtml ;
+            Move (Replaces(C_CRLF, sBody, "<br>")) to sBody
+        Get Create (RefClass(cJsonObject)) to hoBody
+        Send InitializeJsonType of hoBody jsonTypeObject
+        Send SetMemberValue of hoBody "content" jsonTypeString sBody
+        If bHtml ;
+            Send SetMemberValue of hoBody "contentType" jsonTypeString "html"
+        Else ;
+            Send SetMemberValue of hoBody "contentType" jsonTypeString "text"
+        Send SetMember of hoMsg "body" hoBody
+        Send Destroy of hoBody
+        
+        // Recipients:
+        Send AddStrAddrs2Obj (Value(oTo(Self)))  "toRecipients" hoMsg
+        Send AddStrAddrs2Obj (Value(oCC(Self)))  "ccRecipients" hoMsg
+        Send AddStrAddrs2Obj (Value(oBCC(Self))) "bccRecipients" hoMsg
+        
+        // Attachments
+        Get patAttachments to atAtts
+        
+        If (SizeOfArray(atAtts)) Begin
+            Get Create (RefClass(cJsonObject)) to hoAtts
+            Send DataTypeToJson of hoAtts atAtts
+            Send SetMember of hoMsg "attachments" hoAtts
+            Send Destroy of hoAtts
+        End
+        
+        Function_Return hoMsg
+    End_Function
+    
+    Procedure SendEMail
+        Handle  hoEmail hoResp hoJson
+        
+        Get ConstructMsg to hoEMail
+        
+        If not hoEMail ;
+            Procedure_Return
+        
+        Get Create (RefClass(cJsonObject))  to hoJson
+        Send InitializeJsonType of hoJson jsonTypeObject
+        Set pbEscapeForwardSlash of hoJson to False
+        Send SetMember of hoJson "message" hoEMail
+        Send Destroy of hoEMail
+
+        Send SetMemberValue of hoJson "saveToSentItems" jsonTypeBoolean ;
+            (Checked_State(oSaveInSent(Self)))
+
+        Get SendMail of (oGraph(oMain)) hoJson "" to hoResp
+        
+        If (hoResp = -1) Begin  // -1 indicates OK, but no response
+            Send Info_Box "Email sent OK" "Success"
+            Send ClearView
+        End
+        Else ;
+            Send UserError ("Email Send error:" * psError(phoHttp(oGraph(Self)))) "EMail failed to Send" 
+    End_Procedure
+    
+    Procedure SaveAsDraft
+        Handle hoEMail hoResp
+        stDraftMessage tDraft
+        
+        Get ConstructMsg to hoEMail
+        
+        If not hoEMail ;
+            Procedure_Return
+        
+        Get CreateDraftMail of (oGraph(oMain)) hoEMail "" to hoResp
+        
+        If hoResp Begin
+            Get JsonToDataType of hoResp to tDraft
+            Send Info_Box ("Saved to Drafts folder as message id:\n" + tDraft.id) "Message saved to Drafts"
+//            If (Checked_State(oClearAfter(Self))) ;
+            Send ClearView
+        End
+        Else ;
+            Send UserError ("Create Draft Email error:" * psError(phoHttp(oGraph(Self)))) ;
+                "EMail failed to Save"
+    End_Procedure
+
+    Object oTo is a Form
+        Set Size to 13 282
+        Set Location to 6 38
+        Set Label to "To:"
+        Set Label_Justification_Mode to JMode_Right
+        Set Label_Col_Offset to 5
+        Set peAnchors to anTopLeftRight
+        Set Prompt_Button_Mode to PB_PromptOn
+        
+        Procedure Prompt
+            Send AddAddress Self
+        End_Procedure
+        
+    End_Object
+
+    Object oCC is a Form
+        Set Size to 13 282
+        Set Location to 21 38
+        Set Label to "CC:"
+        Set Label_Justification_Mode to JMode_Right
+        Set Label_Col_Offset to 5
+        Set peAnchors to anTopLeftRight
+        Set Prompt_Object to oContactsPrompt
+        Set Prompt_Button_Mode to PB_PromptOn
+        
+        Procedure Prompt
+            Send AddAddress Self
+        End_Procedure
+        
+    End_Object
+
+    Object oBCC is a Form
+        Set Size to 13 282
+        Set Location to 36 38
+        Set Label to "BCC:"
+        Set Label_Justification_Mode to JMode_Right
+        Set Label_Col_Offset to 5
+        Set peAnchors to anTopLeftRight
+        Set Prompt_Object to oContactsPrompt
+        Set Prompt_Button_Mode to PB_PromptOn
+        
+        Procedure Prompt
+            Send AddAddress Self
+        End_Procedure
+        
+    End_Object
+
+    Object oSubject is a Form
+        Set Size to 13 282
+        Set Location to 51 38
+        Set Label to "Subject:"
+        Set Label_Justification_Mode to JMode_Right
+        Set Label_Col_Offset to 5
+        Set peAnchors to anTopLeftRight
+    End_Object
+
+    Object oAddAttachment is a Button
+        Set Size to 14 72
+        Set Location to 4 435
+        Set Label to "Add Attachment(s)"
+        Set peAnchors to anTopRight
+    
+        Procedure OnClick
+            Send AddAttachment
+        End_Procedure
+    
+    End_Object
+    
+    Object oAttachments is a cCJGrid
+        Set Size to 41 180
+        Set Location to 23 327
+        Set pbReadOnly to True
+        Set peAnchors to anTopRight
+
+        Object oAttachment is a cCJGridColumn
+            Set piWidth to 518
+            Set psCaption to "Attachment"
+        End_Object
+        
+        Object oSize is a cCJGridColumn
+            Set piWidth to 133
+            Set psCaption to "Size (bytes)"
+        End_Object
+        
+        Procedure ListAttachments
+            stMailMessagesattachments[] atAtts
+            tDataSourceRow[] atRows
+            Integer   i iMax iAttCol iSizeCol iPos
+            Integer[] aiSizes
+            
+            Get patAttachments to atAtts
+            Get paiAttSizes    to aiSizes
+            
+            Get piColumnId of oAttachment to iAttCol
+            Get piColumnId of oSize       to iSizeCol
+            
+            Move (SizeOfArray(atAtts) - 1) to iMax
+            
+            For i from 0 to iMax
+                Move (RightPos("\", atAtts[i].name)) to iPos
+                Move (Right(atAtts[i].name, (Length(atAtts[i].name) - iPos))) to atRows[i].sValue[iAttCol]
+                Move atAtts[i].name to atRows[i].sValue[iAttCol]
+                Move aiSizes[i] to atRows[i].sValue[iSizeCol]
+            Loop
+            
+            Send InitializeData atRows
+            Send MoveToFirstRow
+        End_Procedure
+        
+        Procedure OnRowDoubleClick Integer iRow Integer iCol
+            stMailMessagesattachments[] atAtts
+            Integer[] aiSizes
+            
+            Get patAttachments to atAtts
+            Get paiAttSizes    to aiSizes
+            
+            If (SizeOfArray(atAtts)) Begin
+                Move (RemoveFromArray(atAtts, iRow))  to atAtts
+                Move (RemoveFromArray(aiSizes, iRow)) to aiSizes
+                Set patAttachments  to atAtts
+                Set paiAttSizes     to aiSizes
+                Send ListAttachments
+            End
+            
+        End_Procedure
+        
+    End_Object
+
+    Object oBody is a cTextEdit
+        Set Size to 165 502
+        Set Location to 79 5
+        Set Label to "Message:"
+        Set peAnchors to anAll
+    End_Object
+
+    Object oHtml is a CheckBox
+        Set Size to 10 50
+        Set Location to 251 4
+        Set Label to "Send as HTML "
+        Set peAnchors to anBottomLeft
+        Set Changed_State to True
+    End_Object
+
+    Object oSaveInSent is a CheckBox
+        Set Size to 10 50
+        Set Location to 251 73
+        Set Label to "Save in Sent Items "
+        Set peAnchors to anBottomLeft
+        Set Checked_State to True
+    End_Object
+
+    Object oUseBeta is a CheckBox
+        Set Size to 10 50
+        Set Location to 251 157
+        Set Label to "Use Graph beta "
+        Set peAnchors to anBottomLeft
+
+        Procedure OnChange
+            Set pbUseBeta of (oGraph(oMain(Self))) to (Checked_State(Self))
+        End_Procedure
+
+    End_Object
+
+    Object oSave is a Button
+        Set Size to 14 84
+        Set Location to 247 302
+        Set Label to "Save to Drafts folder"
+        Set peAnchors to anBottomRight
+    
+        Procedure OnClick
+            Send SaveAsDraft
+            Send Close_Panel
+        End_Procedure
+    
+    End_Object
+
+    Object oSend is a Button
+        Set Location to 247 397
+        Set Label to "Send"
+        Set peAnchors to anBottomRight
+    
+        Procedure OnClick
+            Send SendEmail
+            Send Close_Panel
+        End_Procedure
+    
+    End_Object
+
+    Object oCancel_Btn is a Button
+        Set Label    to "&Cancel"
+        Set Location to 247 456
+        Set peAnchors to anBottomRight
+
+        Procedure OnClick
+            Send Close_Panel
+        End_Procedure
+
+    End_Object
+
+    On_Key Key_Alt+Key_O Send KeyAction of oOK_Btn
+    On_Key Key_Alt+Key_C Send KeyAction of oCancel_Btn
+
+End_Object

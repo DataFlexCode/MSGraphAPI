@@ -1,0 +1,159 @@
+﻿Use Windows.pkg
+Use cCJGrid.pkg
+Use cCJGridColumnRowIndicator.pkg
+Use cCJGridColumn.pkg
+Use GraphStructs\stContactsEmail.pkg
+
+Struct stRecip
+    String sName
+    String sEMail
+End_Struct
+
+Object oContactsPrompt is a ModalPanel
+    Set Size to 158 251
+    Set Label to "EMail Contacts List"
+    Set piMinSize to 89 211
+    Set Location to 2 2
+    Set Border_Style To Border_Thick
+    
+    Property stContactsEmail ptContacts
+    Property stRecip         ptRecip
+    
+    Object oContacts is a cCJGrid
+        Set Size to 126 239
+        Set Location to 7 4
+        Set pbReadOnly to True
+        Set pbSelectionEnable to True
+        Set peAnchors to anAll
+
+        Object oName is a cCJGridColumn
+            Set piWidth to 274
+            Set psCaption to "Name"
+        End_Object
+        
+        Object oEMail is a cCJGridColumn
+            Set piWidth to 421
+            Set psCaption to "EMail"
+        End_Object
+        
+        Procedure LoadContacts
+            Handle  hoContacts
+            Integer i iMax iNameCol iEMailCol j
+            String  sEMail
+            stContactsEmail tContacts
+            tDataSourceRow[] atRows
+            
+            Get ptContacts to tContacts
+            
+            // If we have not already loaded contacts, do so now:
+            If (SizeOfArray(tContacts.value) = 0) Begin
+            
+                // Note: We are limiting the call to the first 10,000 contacts
+                //       (if we don't we only get the first 10 by default). We
+                //       *could* do the first, say, 100 and implement pagination,
+                //       but that would be quite a bit more complex.
+                //
+                //       We also limit the returned data to just displayName and
+                //       emailAddresses.
+                Get ListContacts of (oGraph(oMain)) ;
+                    "$top=10000&$orderby=displayName&$select=displayName,emailAddresses" to hoContacts
+                
+                // Fail?  Give up.  :-(
+                If not hoContacts ;
+                    Procedure_Return
+                
+                Get JsonToDataType of hoContacts to tContacts
+                Send Destroy of hoContacts
+                
+                // Save the contacts for next invocation:
+                Set ptContacts to tContacts
+            End
+            
+            Get piColumnId of oName  to iNameCol
+            Get piColumnId of oEMail to iEMailCol
+            
+            Move (SizeOfArray(tContacts.value) - 1) to iMax
+            Move 0 to j
+            
+            // Note: We are only looking at the first e-mail address for each
+            //       contact here.  We *could* iterate through all addresses for
+            //       each contact, but that's for another day.  :-)
+            For i from 0 to iMax
+                
+                If (SizeOfArray(tContacts.value[i].emailAddresses)) ;
+                    Move tContacts.value[i].emailAddresses[0].address to sEMail
+                Else ;
+                    Move "" to sEMail
+                
+                If (sEMail <> "") Begin
+                    Move tContacts.value[i].displayName to atRows[j].sValue[iNameCol]
+                    If (SizeOfArray(tContacts.value[i].emailAddresses)) ;
+                        Move tContacts.value[i].emailAddresses[0].address ;
+                                                        to atRows[j].sValue[iEMailCol]
+                    Increment j
+                End
+                
+            Loop            
+            
+            Send InitializeData atRows
+            Send MoveToFirstRow
+        End_Procedure
+        
+        Procedure Activating
+            Forward Send Activating
+            Send LoadContacts
+        End_Procedure
+        
+        Procedure OnRowDoubleClick Integer iRow Integer iCol
+            Send KeyAction of oOK_Btn
+        End_Procedure
+        
+    End_Object
+
+    Object oOK_Btn is a Button
+        Set Label    to "&OK"
+        Set Location to 140 142
+        Set peAnchors To anBottomRight
+
+        Procedure OnClick
+            Integer iRow iNameCol iEMailCol
+            Handle  hoDS
+            String  sName sEMail
+            tDataSourceRow[] atRows
+            stContactsEmail tContacts
+            stRecip tRecip
+            
+            Get phoDataSource of oContacts to hoDS
+            Get DataSource of hoDS to atRows
+            Get SelectedRow of hoDS to iRow
+            
+            Get piColumnId of (oName(oContacts(Self)))  to iNameCol
+            Get piColumnId of (oEMail(oContacts(Self))) to iEMailCol
+
+            If not (iRow = -1) Begin
+                Move (Trim(atRows[iRow].sValue[iNameCol]))  to tRecip.sName
+                Move (Trim(atRows[iRow].sValue[iEMailCol])) to tRecip.sEMail
+            End
+            
+            Set ptRecip to tRecip
+            
+            Send Close_Panel
+        End_Procedure
+
+    End_Object
+
+    Object oCancel_Btn is a Button
+        Set Label    to "&Cancel"
+        Set Location to 140 197
+        Set peAnchors to anBottomRight
+
+        Procedure OnClick
+            Send Close_Panel
+        End_Procedure
+
+    End_Object
+
+    On_Key Key_Alt+Key_O Send KeyAction of oOK_Btn
+    On_Key Key_Alt+Key_C Send KeyAction of oCancel_Btn
+
+End_Object

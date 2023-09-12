@@ -1,0 +1,287 @@
+﻿// Useful functions for converting to and from JSON formats
+
+// Assumes we are on this side of year 1000!
+Function IsoDt2DfDt Global String sJsonDT Returns DateTime
+    DateTime dtVal
+    
+    Move (DateSetYear(  dtVal, Left(sJsonDT, 4)))       to dtVal
+    Move (DateSetMonth( dtVal,  Mid(sJsonDT, 2,  6)))   to dtVal
+    Move (DateSetDay(   dtVal,  Mid(sJsonDT, 2,  9)))   to dtVal
+    Move (DateSetHour(  dtVal,  Mid(sJsonDT, 2, 12)))   to dtVal
+    Move (DateSetMinute(dtVal,  Mid(sJsonDT, 2, 15)))   to dtVal
+    Move (DateSetSecond(dtVal,  Mid(sJsonDT, 2, 18)))   to dtVal
+    
+    Function_Return dtVal
+End_Function
+
+// Note: will destroy passed JSON object
+Function JsonDt2DfDt Global Handle hoJson Returns DateTime
+    String sJsonDT
+    
+    If not hoJson ;
+        Function_Return ""
+    
+    Get Stringify of hoJson to sJsonDT
+    Send Destroy of hoJson
+    Function_Return (IsoDt2DfDt(sJsonDT))
+End_Function
+
+// Assumes we are this side of the year 0!
+Function DfDt2IsoDt Global DateTime dtDF Returns String
+    String sVal
+    
+    Move (Right("000" +            String(DateGetYear  (dtDF)), 4)) to sVal
+    Move (sVal + "-" + Right("0" + String(DateGetMonth (dtDF)), 2)) to sVal
+    Move (sVal + "-" + Right("0" + String(DateGetDay   (dtDF)), 2)) to sVal
+    Move (sVal + "T" + Right("0" + String(DateGetHour  (dtDF)), 2)) to sVal
+    Move (sVal + ":" + Right("0" + String(DateGetMinute(dtDF)), 2)) to sVal
+    Move (sVal + ":" + Right("0" + String(DateGetSecond(dtDF)), 2)) to sVal
+    
+    Function_Return sVal
+End_Function
+
+// These e-mail functions might be a part of the MSGraph API class,
+// but they might prove useful elsewhere, so putting them here for now.
+Function JEmAddr2Str Global Handle hoJson Returns String
+    String  sName sAddr
+    Handle  hoEMail
+    
+    If not (HasMember(hoJson, "emailAddress")) ;
+        Function_Return 0
+    
+    Get Member of hoJson "emailAddress" to hoEMail
+    
+    If (HasMember(hoEMail, "name")) ;
+        Get MemberValue of hoEMail "name" to sName
+    If (HasMember(hoEMail, "address")) ;
+        Get MemberValue of hoEMail "address" to sAddr
+    Send Destroy of hoEMail
+    
+    If (sName <> "") ;
+        Move (Trim(sName) + " <" + Trim(sAddr) + ">") to sAddr
+    Function_Return sAddr
+End_Function
+
+Function JEmAddrs2Str Global Handle hoJson Returns String
+    String[] asAddrs
+    Integer  i iMax
+    String   sAddrs
+    Handle   hoAddr
+    
+    If (JsonType(hoJson) <> jsonTypeArray) ;
+        Function_Return ""
+    
+    Get MemberCount of hoJson to iMax
+    Decrement iMax
+    
+    For i from 0 to iMax
+        Get MemberByIndex of hoJson i to hoAddr
+        Get JEmAddr2Str hoAddr to asAddrs[i]
+        Send Destroy of hoAddr
+    Loop
+    
+    Move (StrJoinFromArray(asAddrs, ", ")) to sAddrs
+    Function_Return sAddrs
+End_Function
+
+// Assumes that the address will either be a bare email address or be in the
+// form:
+//       "name <emailAddress>"
+Function StrAddr2JAddr Global String sAddr Returns Handle
+    Handle  hoJson hoEmail
+    Integer iPos
+    String  sName
+    
+    Move (Trim(sAddr)) to sAddr
+    
+    If (sAddr = "") ;
+        Function_Return 0
+    
+    Move (Pos("<", sAddr)) to iPos
+    
+    If iPos Begin
+        Move (Trim(Left(sAddr, (iPos - 1)))) to sName
+        Move (Trim(Right(sAddr, (SizeOfString(sAddr) - iPos)))) to sAddr
+        Move (Replaces(">", sAddr, "")) to sAddr
+    End
+    
+    Get Create (RefClass(cJsonObject)) to hoEmail
+    Send InitializeJsonType of hoEmail jsonTypeObject
+    Send SetMemberValue of hoEmail "name" jsonTypeString sName
+    Send SetMemberValue of hoEmail "address" jsonTypeString sAddr
+    
+    Get Create (RefClass(cJsonObject)) to hoJson
+    Send InitializeJsonType of hoJson jsonTypeObject
+    Send SetMember of hoJson "emailAddress" hoEmail
+    Send Destroy of hoEmail
+    
+    Function_Return hoJson
+End_Function
+
+// Assumes addresses are comma separated in the string.
+// Will return a JSON array
+Function StrAddrs2JAddrs Global String sAddrs Returns Handle
+    String[] asAddrs
+    Integer  i iMax
+    Handle   hoJson hoElem
+    
+    If (sAddrs = "") ;
+        Function_Return 0
+    
+    Move (StrSplitToArray(sAddrs, ",")) to asAddrs
+    Move (SizeOfArray(asAddrs) - 1) to iMax
+    Get Create (RefClass(cJsonObject)) to hoJson
+    Send InitializeJsonType of hoJson jsonTypeArray
+    
+    For i from 0 to iMax
+        Move (StrAddr2JAddr(asAddrs[i])) to hoElem
+        Send AddMember of hoJson hoElem
+        Send Destroy of hoElem
+    Loop
+    
+    Function_Return hoJson
+End_Function
+
+Procedure AddStrAddrs2Obj Global String sAddrs String sElem Handle hoParent
+    Handle hoAddrs
+    
+    If (sAddrs = "") ;
+        Procedure_Return
+    
+    If not hoParent ;
+        Procedure_Return
+    
+    Get StrAddrs2JAddrs sAddrs to hoAddrs
+    
+    If hoAddrs Begin
+        Send SetMember of hoParent sElem hoAddrs
+        Send Destroy of hoAddrs
+    End
+    
+End_Procedure
+
+// This probably doesn't belong here, but it is useful, so putting it
+// here for now.
+Function MimeType Global String sFile Returns String
+    String  sExt
+    Integer iPos
+    
+    Move (Trim(Lowercase(sFile))) to sFile
+    Move (Pos(".", sFile)) to iPos
+    
+    If not iPos ;
+        Function_Return ""  // Nothing to tell us :-(
+    
+    Move (Right(sFile, (Length(sFile) - iPos))) to sExt
+    
+    Case Begin
+        
+        Case (sExt = "txt")
+            Function_Return "text/plain"
+            Case Break
+            
+        Case (sExt = "csv")
+            Function_Return "text/csv"
+            Case Break
+            
+        Case ((sExt = "htm") or (sExt = "html"))
+            Function_Return "text/html"
+            Case Break
+            
+        Case (sExt = "xml")
+            Function_Return "text/xml"
+            Case Break
+            
+        Case (sExt = "css")
+            Function_Return "text/css"
+            Case Break
+            
+        Case (sExt = ".js")
+            Function_Return "application/javascript"
+            Case Break
+            
+        Case (sExt = "json")
+            Function_Return "application/json"
+            Case Break
+            
+        Case ((sExt = "zip") or (sExt = "zipx"))
+            Function_Return "application/zip"
+            Case Break
+            
+        Case (sExt = "zst")
+            Function_Return "application/zstd"
+            Case Break
+            
+        Case (sExt = "doc")
+            Function_Return "application/msword"
+            Case Break
+            
+        Case (sExt = "pdf")
+            Function_Return "application/pdf"
+            Case Break
+            
+        Case (sExt = "sql")
+            Function_Return "application/sql"
+            Case Break
+            
+        Case (sExt = "xls")
+            Function_Return "application/vnd.ms-excel"
+            Case Break
+            
+        Case (sExt = "ppt")
+            Function_Return "application/vnd.ms-powerpoint"
+            Case Break
+            
+        Case (sExt = "odt")
+            Function_Return "application/vnd.oasis.opendocument.text"
+            Case Break
+            
+        Case ((sExt = "mpg") or (sExt = "mpeg"))
+            Function_Return "audio/mpeg"
+            Case Break
+            
+        Case ((sExt = "jpg") or (sExt = "jpeg") or (sExt = "jfif") or (sExt = "pjpeg") or (sExt = "pjp"))
+            Function_Return "image/jpeg"
+            Case Break
+            
+        Case (sExt = "png")
+            Function_Return "image/png"
+            Case Break
+            
+        Case (sExt = "pptx")
+            Function_Return "vnd.openxmlformats-officedocument.presentationml.presentation"
+            Case Break
+            
+        Case (sExt = "xlsx")
+            Function_Return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            Case Break
+            
+        Case (sExt = "docx")
+            Function_Return "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            Case Break
+            
+        Case (sExt = "ogg")
+            Function_Return "audio/ogg"
+            Case Break
+            
+        Case (sExt = "bmp")
+            Function_Return "image/bmp"
+            Case Break
+            
+        Case (sExt = "svg")
+            Function_Return "image/svg+xml"
+            Case Break
+            
+        Case (sExt = "avif")
+            Function_Return "image/avif"
+            Case Break
+                            
+        Case ("vsd|vss|vst|vdx|vsx|vtx|vsdx|vssx|vstx|vsdm|vssm|vstm|vsw|vsl" contains sExt)
+            Function_Return "application/vnd.visio"
+            Case Break
+                            
+    Case End
+    
+    Function_Return ""  // We don't know :-(
+End_Function
+    
