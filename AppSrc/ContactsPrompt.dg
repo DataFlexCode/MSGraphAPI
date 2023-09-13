@@ -100,8 +100,10 @@ Object oContactsPrompt is a ModalPanel
         End_Procedure
         
         Procedure Activating
+            stRecip tRecip
             Forward Send Activating
             Send LoadContacts
+            Set ptRecip to tRecip
         End_Procedure
         
         Procedure OnRowDoubleClick Integer iRow Integer iCol

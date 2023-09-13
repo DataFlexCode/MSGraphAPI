@@ -1,0 +1,85 @@
+﻿Use dbSuggestionForm.pkg
+
+Class cEmailSuggestion is a DbSuggestionForm
+    
+    Procedure Construct_Object
+        Forward Send Construct_Object
+
+        Set Label_Justification_Mode to JMode_Right
+        Set Label_Col_Offset to 5
+        Set Prompt_Button_Mode to PB_PromptOn
+        Set peSuggestionMode to smCustom
+        Set piStartAtChar to 1
+        
+        Property String[] pasContacts
+    End_Procedure
+
+        Procedure Activating
+            stContactsEmail tContacts
+            Integer  i iMax j
+            Handle   hoContacts
+            String[] asContacts
+            String   sContact
+            
+            Forward Send Activating
+            
+            Get ptContacts of oContactsPrompt to tContacts
+            
+            Move (SizeOfArray(tContacts.value)) to iMax
+            
+            If not iMax Begin
+                
+                Get ListContacts of (oGraph(oMain)) ;
+                    "$top=10000&$orderby=displayName&$select=displayName,emailAddresses" to hoContacts
+            
+                // Fail?  Give up.  :-(
+                If not hoContacts ;
+                    Procedure_Return
+                
+                Get JsonToDataType of hoContacts to tContacts
+                Set ptContacts of oContactsPrompt to tContacts
+            End
+            
+            Move (SizeOfArray(tContacts.value) - 1) to iMax
+            Move 0 to j
+            
+            For i from 0 to iMax
+                
+                If (SizeOfArray(tContacts.value[i].emailAddresses)) Begin
+                    Move (tContacts.value[i].displayName * "<" + ;
+                          tContacts.value[i].emailAddresses[0].Address + ">") to asContacts[j]
+                    Increment j
+                End
+                
+            Loop
+            
+            Set pasContacts to (SortArray(asContacts, Desktop, RefFunc(DFSTRICMP)))
+        End_Procedure
+        
+        Procedure OnFindSuggestions String sSearch tSuggestion[] ByRef aSuggestions
+            String[] asContacts
+            Integer  i iMax iLen iCount
+            
+            Get pasContacts to asContacts
+
+            Move (Lowercase(sSearch)) to sSearch
+            Move (Length(sSearch)) to iLen
+
+            Move (SizeOfArray(asContacts) -1) to iMax
+            
+            For i from 0 to iMax
+                
+                If (Lowercase(asContacts[i]) contains sSearch) Begin
+                    Move asContacts[i] to aSuggestions[iCount].sRowId
+                    Move asContacts[i] to aSuggestions[iCount].aValues[0]
+                    Increment iCount
+                End
+            Loop
+            
+        End_Procedure
+        
+        Procedure OnSelectSuggestion String sSearch tSuggestion Suggestion
+            Set Value to Suggestion.sRowId
+        End_Procedure
+        
+End_Class

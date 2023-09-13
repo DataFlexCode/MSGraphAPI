@@ -9,6 +9,7 @@ Use File_dlg.pkg
 Use seq_chnl.pkg
 Use ContactsPrompt.dg
 Use JsonConvFuncs.pkg
+Use cEmailSuggestion.pkg
 
 Register_Procedure Set pbUseBeta Boolean bTrue
 
@@ -16,7 +17,7 @@ Register_Procedure Set pbUseBeta Boolean bTrue
     Define C_CRLF for (Character(13) + Character(10))
 #ENDIF
 
-Object oComposeMail is a ModalPanel
+Object oComposeMail is a dbModalPanel
     Set Size to 263 512
     Set Label to "Compose Mail"
     Set piMinSize to 89 211
@@ -50,6 +51,9 @@ Object oComposeMail is a ModalPanel
         
         Send Popup    of oContactsPrompt
         Get ptRecip   of oContactsPrompt to tRecip
+        
+        If (tRecip.sName = "") ;
+            Procedure_Return
         
         Get Value of hoObj to sVal
         If (sVal <> "") ;
@@ -213,12 +217,10 @@ Object oComposeMail is a ModalPanel
                 "EMail failed to Save"
     End_Procedure
 
-    Object oTo is a Form
+    Object oTo is a cEmailSuggestion
         Set Size to 13 282
         Set Location to 6 38
         Set Label to "To:"
-        Set Label_Justification_Mode to JMode_Right
-        Set Label_Col_Offset to 5
         Set peAnchors to anTopLeftRight
         Set Prompt_Button_Mode to PB_PromptOn
         
@@ -228,14 +230,11 @@ Object oComposeMail is a ModalPanel
         
     End_Object
 
-    Object oCC is a Form
+    Object oCC is a cEmailSuggestion
         Set Size to 13 282
         Set Location to 21 38
         Set Label to "CC:"
-        Set Label_Justification_Mode to JMode_Right
-        Set Label_Col_Offset to 5
         Set peAnchors to anTopLeftRight
-        Set Prompt_Object to oContactsPrompt
         Set Prompt_Button_Mode to PB_PromptOn
         
         Procedure Prompt
@@ -244,14 +243,11 @@ Object oComposeMail is a ModalPanel
         
     End_Object
 
-    Object oBCC is a Form
+    Object oBCC is a cEmailSuggestion
         Set Size to 13 282
         Set Location to 36 38
         Set Label to "BCC:"
-        Set Label_Justification_Mode to JMode_Right
-        Set Label_Col_Offset to 5
         Set peAnchors to anTopLeftRight
-        Set Prompt_Object to oContactsPrompt
         Set Prompt_Button_Mode to PB_PromptOn
         
         Procedure Prompt

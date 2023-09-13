@@ -278,14 +278,14 @@ Object oEMail is a dbView
             Procedure_Return
         Move atRows[iRow].vTag to sID
         
-//        Move "$select=subject,from,toRecipients,ccRecipients,body,receivedDateTime" to sParams
-//        
-//        Get Message of (oGraph(Self)) sID SParams to hoResp
+        Move "$select=subject,from,toRecipients,ccRecipients,body,receivedDateTime" to sParams
+        
+        Get Message of (oGraph(Self)) sID SParams to hoResp
         
         If not hoResp ;
             Procedure_Return
         
-        // See Dennis?  This is the issue!
+        // See Dennis?  THIS is the issue!
         String sJson
         Get Stringify of hoResp to sJson
         
