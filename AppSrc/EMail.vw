@@ -271,7 +271,7 @@ Object oEMail is a dbView
         Set Enabled_State of oMsgTxt  to True
         Set Enabled_State of oMsgHtml to False
         
-        // Get the message ID from the gris datasource
+        // Get the message ID from the grid datasource
         Get phoDataSource of oMailGrid to hoDS
         Get DataSource of hoDS to atRows
         If (iRow >= SizeOfArray(atRows)) ;

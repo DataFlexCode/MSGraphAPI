@@ -107,7 +107,7 @@ Class cMSGraphAPI is a cObject
         
         Move (GraphPath(Self) + "me/messages/" + sID) to sPath
         
-        Get MakeJsonCall of (phoHttp(Self)) "GET" sPath sParams to hoResp
+        Get MakeJsonCall of (phoHttp(Self)) "GET" sPath sParams 0 to hoResp
         
         Function_Return hoResp
     End_Function
