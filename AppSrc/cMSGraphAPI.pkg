@@ -133,15 +133,16 @@ Class cMSGraphAPI is a cObject
     End_Function
     
     // See: https://learn.microsoft.com/en-us/graph/api/message-get?view=graph-rest-1.0&tabs=http
-    Function Message String sID String sParams Returns Handle
+    Function GetMessage String sID String sParams Returns Handle
         Handle hoResp
         String sPath
         
         Move (GraphPath(Self) + "me/messages/" + sID) to sPath
         
-        Get MakeJsonCall of (phoHttp(Self)) "GET" sPath sParams 0 to hoResp
+        Get MakeJsonCall of (phoHttp(Self)) "GET" sPath sParams to hoResp
         
         Function_Return hoResp
     End_Function
     
+        
 End_Class

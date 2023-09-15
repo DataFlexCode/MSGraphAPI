@@ -284,7 +284,7 @@ Object oEMail is a dbView
         
         Move "$select=subject,from,toRecipients,ccRecipients,body,receivedDateTime,hasAttachments" to sParams
         
-        Get Message of (oGraph(Self)) sID SParams to hoResp
+        Get GetMessage of (oGraph(Self)) sID SParams to hoResp
         
         If not hoResp ;
             Procedure_Return

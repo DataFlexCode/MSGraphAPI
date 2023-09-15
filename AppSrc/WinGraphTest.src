@@ -379,7 +379,7 @@ Object oMain is a Panel
     End_Object
         
     // Allow views to access the OAuth2 access token and login state
-    Function OAuth2AccessToken Returns String
+    Function AccessToken Returns String
         Function_Return (wpsAccessToken(oOAuth2(Self)))
     End_Function
     
