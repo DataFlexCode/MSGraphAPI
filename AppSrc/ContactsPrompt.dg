@@ -55,7 +55,7 @@ Object oContactsPrompt is a ModalPanel
                 //
                 //       We also limit the returned data to just displayName and
                 //       emailAddresses.
-                Get ListContacts of (oGraph(oMain)) ;
+                Get ListContacts of (oGraph(Self)) ;
                     "$top=10000&$orderby=displayName&$select=displayName,emailAddresses" to hoContacts
                 
                 // Fail?  Give up.  :-(

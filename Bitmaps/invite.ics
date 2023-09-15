@@ -1,0 +1,46 @@
+BEGIN:VCALENDAR
+PRODID:-//Mozilla.org/NONSGML Mozilla Calendar V1.1//EN
+VERSION:2.0
+METHOD:REPLY
+BEGIN:VEVENT
+LAST-MODIFIED:20230914T121826Z
+DTSTAMP:20230914T121826Z
+UID:040000008200E00074C5B7101A82E00800000000037E4348FFE6D901000000000000000
+ 0100000007E6B04181586574283B7575E5978D308
+SUMMARY:Synergy 2023
+PRIORITY:5
+STATUS:CONFIRMED
+ORGANIZER;CN=Mike Peat:mailto:mpeat@unicorninterglobal.onmicrosoft.com
+ATTENDEE;CN=Mike Peat;PARTSTAT=ACCEPTED;CUTYPE=INDIVIDUAL:mailto:mpeat@unic
+ orninterglobal.com
+DTSTART;VALUE=DATE:20230919
+DTEND;VALUE=DATE:20230925
+DESCRIPTION;LANGUAGE=en-GB:This year it is in Louisville\, Kentucky.\n\nThe
+ re is a packed agenda full of interesting content\, as well as several pre-
+ conference training sessions.\n\nToDo List:\n\n  *   Register (done)\n  *  
+  Book flights (done)\n  *   Get ESTA (done)\n  *   Give airline extra detai
+ ls (done)\n  *   Prepare presentation (done)\n  *   Get demos working (most
+ ly done)\n  *   Pack\n  *   Go to airport\n\n
+CLASS:PUBLIC
+TRANSP:TRANSPARENT
+SEQUENCE:0
+LOCATION;LANGUAGE=en-GB:Embassy Suites Downton Louisville
+X-MICROSOFT-CDO-APPT-SEQUENCE:0
+X-MICROSOFT-CDO-OWNERAPPTID:2121888515
+X-MICROSOFT-CDO-BUSYSTATUS:FREE
+X-MICROSOFT-CDO-INTENDEDSTATUS:FREE
+X-MICROSOFT-CDO-ALLDAYEVENT:TRUE
+X-MICROSOFT-CDO-IMPORTANCE:1
+X-MICROSOFT-CDO-INSTTYPE:0
+X-MICROSOFT-DONOTFORWARDMEETING:FALSE
+X-MICROSOFT-DISALLOW-COUNTER:FALSE
+X-MICROSOFT-REQUESTEDATTENDANCEMODE:DEFAULT
+X-MICROSOFT-LOCATIONDISPLAYNAME:Embassy Suites Downton Louisville
+X-MICROSOFT-LOCATIONSOURCE:None
+X-MICROSOFT-LOCATIONS:[{"DisplayName":"Embassy Suites Downton Louisville"\,
+ "LocationAnnotation":""\,"LocationUri":""\,"LocationStreet":""\,"LocationCi
+ ty":""\,"LocationState":""\,"LocationCountry":""\,"LocationPostalCode":""\,
+ "LocationFullAddress":""}]
+END:VEVENT
+END:VCALENDAR
+

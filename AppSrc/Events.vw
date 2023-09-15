@@ -120,7 +120,7 @@ Object oEvents is a dbView
             Get piColumnId of oEventEnd   to iEndCol
             Get piColumnId of oEventName  to iNameCol
             
-            Get GetEvents of oGraph "" "$orderby=start/dateTime desc&$top=10000" to hoEvents
+            Get ListEvents of oGraph "" "$orderby=start/dateTime desc&$top=10000" to hoEvents
             
             If not hoEvents ;
                 Procedure_Return
@@ -345,7 +345,7 @@ Object oEvents is a dbView
             Get phoEvents to hoEvents
             
             If (JsonValueAtPath(hoEvents, "value[" + String(iEvt) + "].hasAttachments")) Begin
-                Get GetEventAttachments of oGraph ;
+                Get ListEventAttachments of oGraph ;
                     (JsonValueAtPath(hoEvents, "value[" + String(iEvt) + "].id")) "" to hoAtts
                 
                 If hoAtts Begin

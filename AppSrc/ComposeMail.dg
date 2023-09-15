@@ -17,7 +17,7 @@ Register_Procedure Set pbUseBeta Boolean bTrue
     Define C_CRLF for (Character(13) + Character(10))
 #ENDIF
 
-Object oComposeMail is a dbModalPanel
+Object oComposeMail is a ModalPanel
     Set Size to 263 512
     Set Label to "Compose Mail"
     Set piMinSize to 89 211
@@ -209,7 +209,6 @@ Object oComposeMail is a dbModalPanel
         If hoResp Begin
             Get JsonToDataType of hoResp to tDraft
             Send Info_Box ("Saved to Drafts folder as message id:\n" + tDraft.id) "Message saved to Drafts"
-//            If (Checked_State(oClearAfter(Self))) ;
             Send ClearView
         End
         Else ;

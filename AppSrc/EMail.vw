@@ -9,18 +9,21 @@ Use cMSGraphAPI.pkg
 Use JsonConvFuncs.pkg
 Use ComposeMail.dg
 Use cCJGridColumnRowIndicator.pkg
+Use seq_chnl.pkg
 
 Struct stMsgItem
     String sID
     String sSubj
     String sFrom
     DateTime dtRcvd
+    Boolean bAtts
 End_Struct
 
 Deferred_View Activate_oEMail for ;
 Object oEMail is a dbView
     
     Property String psMailFolder
+    Property String psMsgID
     
     Property String psInboxID
     Property String psDraftsID
@@ -31,7 +34,7 @@ Object oEMail is a dbView
     Property stMsgItem[] patMsgs
 
     Set Border_Style to Border_Thick
-    Set Size to 296 562
+    Set Size to 269 568
     Set Location to 2 2
     Set Label to "EMail"
     
@@ -151,7 +154,7 @@ Object oEMail is a dbView
 
     Object oComposeBtn is a Button
         Set Size to 14 64
-        Set Location to 3 388
+        Set Location to 3 394
         Set Label to "Compose New"
         Set peAnchors to anTopRight
         Set Enabled_State to False
@@ -163,7 +166,7 @@ Object oEMail is a dbView
     End_Object
 
     Object oRefreshBtn is a Button
-        Set Location to 3 507
+        Set Location to 3 513
         Set Label to "Refresh"
         Set peAnchors to anTopRight
     
@@ -197,8 +200,8 @@ Object oEMail is a dbView
             Get psArchID to sID
         
         Move ((sFldr  = "Drafts") or (sFldr = "Sent Items")) to bShowTo
-            
-        Move "$orderby=receivedDateTime desc&$top=10000&$select=subject,receivedDateTime," to sParams
+        
+        Move "$orderby=receivedDateTime desc&$top=10000&$select=subject,receivedDateTime,hasAttachments," to sParams
         Move (sParams + If(bShowTo, "toRecipients", "from")) to sParams
             
         Get ListMessages of oGraph sID sParams to hoResp
@@ -216,10 +219,8 @@ Object oEMail is a dbView
         For i from 0 to iMsgs
             Get MemberByIndex of hoMsgs i               to hoMsg
             
-            String sJson
-            Get Stringify of hoMsg to sJson
-            
             Get MemberValue of hoMsg "id"               to atMsgs[i].sID
+
             If (HasMember(hoMsg, "subject") and ;
                (MemberJsonType(hoMsg, "subject") <> jsonTypeNull)) ;
                 Get MemberValue of hoMsg "subject"      to atMsgs[i].sSubj
@@ -245,7 +246,10 @@ Object oEMail is a dbView
             
             If (HasMember(hoMsg, "receivedDateTime")) ;
                 Move (IsoDt2DfDt(MemberValue(hoMsg, "receivedDateTime"))) to atMsgs[i].dtRcvd
-                        
+            
+            If (HasMember(hoMsg, "hasAttachments")) ;
+                Move (MemberValue(hoMsg, "hasAttachments")) to atMsgs[i].bAtts
+            
             Send Destroy of hoMsg
         Loop
         
@@ -268,8 +272,8 @@ Object oEMail is a dbView
         Set Value of oSubject   to ""
         Set Value of oMsgTxt    to ""
         Set Value of oRcvdDT    to ""
-        Set Enabled_State of oMsgTxt  to True
-        Set Enabled_State of oMsgHtml to False
+        Send ResetGrid of oAttachments
+        Set psMsgID             to ""
         
         // Get the message ID from the grid datasource
         Get phoDataSource of oMailGrid to hoDS
@@ -278,14 +282,14 @@ Object oEMail is a dbView
             Procedure_Return
         Move atRows[iRow].vTag to sID
         
-        Move "$select=subject,from,toRecipients,ccRecipients,body,receivedDateTime" to sParams
+        Move "$select=subject,from,toRecipients,ccRecipients,body,receivedDateTime,hasAttachments" to sParams
         
         Get Message of (oGraph(Self)) sID SParams to hoResp
         
         If not hoResp ;
             Procedure_Return
         
-        // See Dennis?  THIS is the issue!
+        // See Dennis? THIS is the issue!
         String sJson
         Get Stringify of hoResp to sJson
         
@@ -332,12 +336,79 @@ Object oEMail is a dbView
             
             Send Destroy of hoVal
         End
-
+        
+        If (HasMember(hoResp, "hasAttachments") and ;
+            (MemberValue(hoResp, "hasAttachments"))) ;
+            Send LoadAttachments of oAttachments sID
+        
+        Send Destroy of hoResp
+        
+        Set psMsgID to sID        
+    End_Procedure
+    
+    Procedure DisplayAttachment String sAttID
+        String  sMsgID sBytes sName sDwnld
+        Handle  hoResp
+        UChar[] ucaBytes
+        Integer iChn
+        Boolean bExist
+        
+        Get psMsgID to sMsgID
+        
+        If ((sMsgID = "") or (sAttID = "")) ;
+            Procedure_Return
+        
+        Get Attachment of (oGraph(Self)) sMsgID sAttID "" to hoResp
+        
+        If not hoResp ;
+            Procedure_Return
+                
+        If not (HasMember(hoResp, "name")) ;
+            Procedure_Return
+        If not (HasMember(hoResp, "contentBytes")) ;
+            Procedure_Return
+        
+        Get MemberValue of hoResp "name"            to sName
+        Get MemberValue of hoResp "contentBytes"    to sBytes
+        
+        // NOTE: This is nasty and will leave the file in your Downloads folder
+        //       for later cleanup.  We can't just delete it now because the
+        //       program that opens it needs it to be there.
+        //
+        //       Adding (see below):
+        //           Sleep 1
+        //           EraseFile sDwnld
+        //       to the end of the procedure does work sometimes, but is a
+        //       bit "brittle", so I have commented it out.
+        Move (StringToUCharArray(sBytes))                   to ucaBytes
+        Move (Base64DecodeUCharArray(oCharTr, ucaBytes))    to ucaBytes
+        Move (psHome(phoWorkspace(ghoApplication)) + "\Downloads") to sDwnld
+        
+        // Make sure we have the folder "Downloads"
+        File_Exist sDwnld bExist
+        
+        If not bExist ;
+            Make_Directory sDwnld
+        
+        // Write the file:
+        Move (sDwnld + "\" + sName) to sDwnld
+        Get Seq_New_Channel to iChn
+        Direct_Output channel iChn ("binary:" * sDwnld)
+        Write channel iChn ucaBytes
+        Close_Output channel iChn
+        Send Seq_Release_Channel iChn
+        
+        // Get the OS to open it as appropriate
+        Runprogram Shell Background sDwnld
+        
+        // Use at your own risk
+//        Sleep 1
+//        EraseFile sDwnld
     End_Procedure
     
     Object oBoxGrp is a Group
         Set Size to 120 56
-        Set Location to 29 4
+        Set Location to 19 4
         Set Label to "Folders:"
         
         Procedure ResetBtns Handle hoCurr
@@ -382,7 +453,6 @@ Object oEMail is a dbView
         
             Procedure OnClick
                 Send ResetBtns Self
-
             End_Procedure
         
         End_Object
@@ -421,8 +491,8 @@ Object oEMail is a dbView
     End_Object
 
     Object oMailGrid is a cCJGrid
-        Set Size to 124 492
-        Set Location to 24 68
+        Set Size to 126 498
+        Set Location to 21 68
         Set pbReadOnly to True
         Set peAnchors to anTopLeftRight
 
@@ -430,30 +500,47 @@ Object oEMail is a dbView
         End_Object
 
         Object oSubjCol is a cCJGridColumn
-            Set piWidth to 200
+            Set piWidth to 110
             Set psCaption to "Subject"
         End_Object
 
         Object oFromCol is a cCJGridColumn
-            Set piWidth to 100
+            Set piWidth to 200
             Set psCaption to "From"
         End_Object
 
         Object oRcvdCol is a cCJGridColumn
-            Set piWidth to 70
+            Set piWidth to 40
             Set psCaption to "Received"
+        End_Object
+
+        Object oHasAtts is a cCJGridColumn
+            Set piWidth to 6
+            Set psCaption to (Character(128206))
+            Set peTextAlignment to xtpAlignmentCenter
+            Set peHeaderAlignment to xtpAlignmentCenter
+            
+            Procedure OnSetDisplayMetrics Handle hoGridItemMetrics Integer iRow String ByRef sValue
+                
+                If (sValue = "1") ;
+                    Move (Character(128206)) to sValue
+                Else ;
+                    Move "" to sValue
+            End_Procedure
+            
         End_Object
         
         Procedure LoadData Boolean bShowTo
             stMsgItem[] atMsgs
             tDataSourceRow[] atRows
-            Integer iSubjCol iFromCol iRcvdCol i iMax
+            Integer iSubjCol iFromCol iRcvdCol iAttsCol i iMax
             
             Set psCaption of oFromCol to (If(bShowTo, "To", "From"))
             
             Get piColumnId of oSubjCol to iSubjCol
             Get piColumnId of oFromCol to iFromCol
             Get piColumnId of oRcvdCol to iRcvdCol
+            Get piColumnId of oHasAtts to iAttsCol
             
             Get patMsgs to atMsgs
             Move (SizeOfArray(atMsgs) - 1) to iMax
@@ -463,6 +550,7 @@ Object oEMail is a dbView
                 Move atMsgs[i].sSubj  to atRows[i].sValue[iSubjCol]
                 Move atMsgs[i].sFrom  to atRows[i].sValue[iFromCol]
                 Move atMsgs[i].dtRcvd to atRows[i].sValue[iRcvdCol]
+                Move atMsgs[i].bAtts  to atRows[i].sValue[iAttsCol]
             Loop
             
             Send InitializeData atRows
@@ -474,16 +562,10 @@ Object oEMail is a dbView
         End_Procedure
         
     End_Object
-
-    Object oLineControl is a LineControl
-        Set Size to 4 554
-        Set Location to 152 5
-        Set peAnchors to anTopLeftRight
-    End_Object
     
     Object oFrom is a Form
-        Set Size to 12 522
-        Set Location to 157 37
+        Set Size to 12 352
+        Set Location to 151 37
         Set Label to "From:"
         Set Label_Justification_Mode to JMode_Right
         Set Label_Col_Offset to 5
@@ -491,27 +573,126 @@ Object oEMail is a dbView
     End_Object
 
     Object oTo is a Form
-        Set Size to 12 522
-        Set Location to 171 37
+        Set Size to 12 352
+        Set Location to 165 37
         Set Label to "To:"
         Set Label_Justification_Mode to JMode_Right
         Set Label_Col_Offset to 5
         Set peAnchors to anTopLeftRight
     End_Object
 
+    Object oCC is a Form
+        Set Size to 12 352
+        Set Location to 179 37
+        Set Label to "CC:"
+        Set Label_Justification_Mode to JMode_Right
+        Set Label_Col_Offset to 5
+        Set peAnchors to anTopLeftRight
+    End_Object
+    
+    Object oSubject is a Form
+        Set Size to 12 352
+        Set Location to 193 37
+        Set Label to "Subject:"
+        Set Label_Justification_Mode to JMode_Right
+        Set Label_Col_Offset to 5
+        Set peAnchors to anTopLeftRight
+    End_Object
+
+    Object oAttachments is a cCJGrid
+        Set Size to 39 170
+        Set Location to 151 395
+        Set peAnchors to anTopRight
+        Set pbReadOnly to True
+
+        Object oCJGridColumnRowIndicator2 is a cCJGridColumnRowIndicator
+        End_Object
+        
+        Object oAttachment is a cCJGridColumn
+            Set piWidth to 338
+            Set psCaption to "Attachment"
+        End_Object
+        
+        Object oAttSize is a cCJGridColumn
+            Set piWidth to 173
+            Set psCaption to "Size"
+        End_Object
+
+        Procedure LoadAttachments String sMsgID
+            tDataSourceRow[] atRows
+            Handle  hoResp hoAtts hoAtt
+            Integer i iMax iNameCol iSizeCol
+            String  sParams
+            
+            Move "$select=name,size" to sParams
+            Get ListMailAttachments of (oGraph(Self)) sMsgID sParams to hoResp
+            
+            If not hoResp ;
+                Procedure_Return
+            
+            Get piColumnId of oAttachment to iNameCol
+            Get piColumnId of oAttSize    to iSizeCol
+            
+            If not (HasMember(hoResp, "value"))  ;
+                Procedure_Return
+            
+            Get Member of hoResp "value" to hoAtts
+            Get MemberCount of hoAtts to iMax
+            Decrement iMax
+            
+            For i from 0 to iMax
+                Get MemberByIndex of hoAtts i to hoAtt
+                If (HasMember(hoAtt, "id")) ;
+                    Get MemberValue of hoAtt "id" to atRows[i].vTag
+                If (HasMember(hoAtt, "name")) ;
+                    Get MemberValue of hoAtt "name" to atRows[i].sValue[iNameCol]
+                If (HasMember(hoAtt, "size")) ;
+                    Get MemberValue of hoAtt "size" to atRows[i].sValue[iSizeCol]
+                Send Destroy of hoAtt
+            Loop
+            
+            Send Destroy of hoAtts
+            Send Destroy of hoResp
+            
+            Send InitializeData atRows
+            Send MoveToFirstRow
+        End_Procedure
+        
+        Procedure OnRowDoubleClick Integer iRow Integer iCol
+            Handle  hoDS hoResp
+            tDataSourceRow[] atRows
+            String  sID
+            
+            Get phoDataSource to hoDS
+            Get DataSource of hoDS to atRows
+            Move atRows[iRow].vTag to sID
+            
+            Send DisplayAttachment sID
+        End_Procedure
+        
+    End_Object
+        
+    Object oBodyTextBox is a TextBox
+        Set Size to 10 50
+        Set Location to 207 3
+        Set Label to "Message body:"
+    End_Object
+
     Object oMsgTxt is a cTextEdit
-        Set Label to "Message:"
-        Set Size to 71 556
-        Set Location to 222 3
+        Set Size to 49 562
+        Set Location to 217 3
         Set peAnchors to anAll
     End_Object
 
     Object oMsgHtml is a cWebView2Browser
-        Set Label to "Message:"
-        Set Size to 71 556
-        Set Location to 222 3
+        Set Size to 49 562
+        Set Location to 217 3
+        Set Label_Justification_Mode to JMode_Top
+        Set Label_Col_Offset to 0
         Set peAnchors to anAll
+        Set Enabled_State to True
         Set Visible_State to False
+        Set pbBorderVisible to True
         
         // WARNING: This is a nasty hack.
         //
@@ -530,27 +711,9 @@ Object oEMail is a dbView
         
     End_Object
 
-    Object oCC is a Form
-        Set Size to 12 522
-        Set Location to 185 37
-        Set Label to "CC:"
-        Set Label_Justification_Mode to JMode_Right
-        Set Label_Col_Offset to 5
-        Set peAnchors to anTopLeftRight
-    End_Object
-    
-    Object oSubject is a Form
-        Set Size to 12 406
-        Set Location to 199 37
-        Set Label to "Subject:"
-        Set Label_Justification_Mode to JMode_Right
-        Set Label_Col_Offset to 5
-        Set peAnchors to anTopLeftRight
-    End_Object
-
     Object oRcvdDT is a Form
         Set Size to 12 69
-        Set Location to 199 490
+        Set Location to 193 496
         Set Label to "Received:"
         Set Label_Justification_Mode to JMode_Right
         Set Label_Col_Offset to 5

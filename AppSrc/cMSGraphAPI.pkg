@@ -20,7 +20,8 @@ Class cMSGraphAPI is a cObject
             Function_Return (psGraphBasePath(Self))
     End_Function
     
-    Function GetEvents String sCalendar String sParams Returns Handle
+    // See: https://learn.microsoft.com/en-us/graph/api/user-list-events?view=graph-rest-1.0&tabs=http
+    Function ListEvents String sCalendar String sParams Returns Handle
         Handle hoEvents
         String sPath
         
@@ -33,7 +34,8 @@ Class cMSGraphAPI is a cObject
         Function_Return hoEvents
     End_Function
     
-    Function GetEventAttachments String sID String sParams Returns Handle
+    // See: https://learn.microsoft.com/en-us/graph/api/event-list-attachments?view=graph-rest-1.0&tabs=http
+    Function ListEventAttachments String sID String sParams Returns Handle
         String sPath
         Handle hoAtts
         
@@ -43,6 +45,7 @@ Class cMSGraphAPI is a cObject
         Function_Return hoAtts
     End_Function
     
+    // See: https://learn.microsoft.com/en-us/graph/api/user-sendmail?view=graph-rest-1.0&tabs=http
     Function SendMail Handle hoMessage String sParams Returns Handle
         String sPath
         Handle hoResp
@@ -54,6 +57,7 @@ Class cMSGraphAPI is a cObject
         Function_Return hoResp
     End_Function
     
+    // See: https://learn.microsoft.com/en-us/graph/api/user-post-messages?view=graph-rest-1.0&tabs=http
     Function CreateDraftMail Handle hoMessage String sParams Returns Handle
         String sPath
         Handle hoResp
@@ -65,6 +69,7 @@ Class cMSGraphAPI is a cObject
         Function_Return hoResp
     End_Function
     
+    // See: https://learn.microsoft.com/en-us/graph/api/user-list-contacts?view=graph-rest-1.0&tabs=http
     Function ListContacts String sParams Returns Handle
         String sPath
         Handle hoResp
@@ -76,6 +81,7 @@ Class cMSGraphAPI is a cObject
         Function_Return hoResp
     End_Function
     
+    // See: https://learn.microsoft.com/en-us/graph/api/user-list-mailfolders?view=graph-rest-1.0&tabs=http
     Function ListMailFolders String sParams Returns Handle
         String sPath
         Handle hoResp
@@ -87,6 +93,7 @@ Class cMSGraphAPI is a cObject
         Function_Return hoResp
     End_Function
     
+    // See: https://learn.microsoft.com/en-us/graph/api/user-list-messages?view=graph-rest-1.0&tabs=http
     Function ListMessages String sFolder String sParams Returns Handle
         String sPath
         Handle hoResp
@@ -101,9 +108,34 @@ Class cMSGraphAPI is a cObject
         Function_Return hoResp
     End_Function
     
-    Function Message String sID String sParams Returns Handle
-        String sPath
+    // See: https://learn.microsoft.com/en-us/graph/api/message-list-attachments?view=graph-rest-1.0&tabs=http
+    Function ListMailAttachments String sMsgID String sParams Returns Handle
         Handle hoResp
+        String sPath
+        
+        Move (GraphPath(Self) + "me/messages/" + sMsgID + "/attachments") to sPath
+        
+        Get MakeJsonCall of (phoHttp(Self)) "GET" sPath sParams 0 to hoResp
+        
+        Function_Return hoResp
+    End_Function
+    
+    // See: https://learn.microsoft.com/en-us/graph/api/attachment-get?view=graph-rest-1.0&tabs=http
+    Function Attachment String sMsgID String sAttID String sParams Returns Handle
+        Handle hoResp
+        String sPath
+        
+        Move (GraphPath(Self) + "me/messages/" + sMsgID + "/attachments/" + sAttID) to sPath
+        
+        Get MakeJsonCall of (phoHttp(Self)) "GET" sPath sParams 0 to hoResp
+        
+        Function_Return hoResp
+    End_Function
+    
+    // See: https://learn.microsoft.com/en-us/graph/api/message-get?view=graph-rest-1.0&tabs=http
+    Function Message String sID String sParams Returns Handle
+        Handle hoResp
+        String sPath
         
         Move (GraphPath(Self) + "me/messages/" + sID) to sPath
         
