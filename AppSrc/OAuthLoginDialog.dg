@@ -18,6 +18,12 @@ Object oOAuthLoginDialog is a ModalPanel
     Set Border_Style To Border_Thick
     Set Locate_Mode to CENTER_ON_PANEL
     
+    Procedure Page_Object Boolean bPage
+        Forward Send Page_Object bPage
+        
+        Set Icon to "UIG.ico"
+    End_Procedure
+    
     Property Boolean pbLoggedIn         False
     Property String  psCode             ""
     Property String  psState            ""

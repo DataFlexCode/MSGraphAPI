@@ -20,8 +20,10 @@ Object oEvents is a dbView
     Property Handle phoEvents
 
     Set Border_Style to Border_Thick
-    Set Size to 285 843
-    Set Location to 2 4
+    Set Size to 287 555
+    Set Location to 1 1
+    Set Icon to "UIG.ico"
+    
     Set Label to "MS Graph Events"
     
     Procedure SetLoginState
@@ -75,7 +77,7 @@ Object oEvents is a dbView
     End_Object
     
     Object oRefresh is a Button
-        Set Location to 3 471
+        Set Location to 3 183
         Set Label to "Refresh"
         Set peAnchors to anTopRight
     
@@ -86,7 +88,7 @@ Object oEvents is a dbView
     End_Object
     
     Object oEventsGrid is a cCJGrid
-        Set Size to 261 511
+        Set Size to 263 223
         Set Location to 20 9
         Set peAnchors to anAll
         Set pbReadOnly to True
@@ -198,7 +200,7 @@ Object oEvents is a dbView
 
     Object oEvent is a Form
         Set Size to 12 267
-        Set Location to 27 574
+        Set Location to 27 286
         Set Label to "Body Preview:"
         Set Label_Col_Offset to 5
         Set Label_Justification_Mode to JMode_Right
@@ -207,7 +209,7 @@ Object oEvents is a dbView
     
     Object oLocation is a Form
         Set Size to 12 131
-        Set Location to 42 574
+        Set Location to 42 286
         Set Label to "Location:"
         Set Label_Col_Offset to 5
         Set Label_Justification_Mode to JMode_Right
@@ -216,7 +218,7 @@ Object oEvents is a dbView
     
     Object oReminder is a Form
         Set Size to 12 24
-        Set Location to 42 816
+        Set Location to 42 528
         Set Label to "Reminder before (minutes):"
         Set Label_Col_Offset to 5
         Set Label_Justification_Mode to JMode_Right
@@ -225,28 +227,28 @@ Object oEvents is a dbView
 
     Object oAllday is a CheckBox
         Set Size to 10 50
-        Set Location to 59 575
+        Set Location to 59 287
         Set Label to "All day"
         Set peAnchors to anTopRight
     End_Object
 
     Object oCancelled is a CheckBox
         Set Size to 10 50
-        Set Location to 59 646
+        Set Location to 59 358
         Set Label to "Cancelled"
         Set peAnchors to anTopRight
     End_Object
 
     Object oRespReq is a CheckBox
         Set Size to 10 50
-        Set Location to 59 736
+        Set Location to 59 448
         Set Label to "Response requested"
         Set peAnchors to anTopRight
     End_Object
     
     Object oShowAs is a Form
         Set Size to 12 61
-        Set Location to 73 574
+        Set Location to 73 286
         Set Label to "Show time as:"
         Set Label_Col_Offset to 5
         Set Label_Justification_Mode to JMode_Right
@@ -255,21 +257,21 @@ Object oEvents is a dbView
 
     Object oLink is a cLinkLabel
         Set Size to 8 81
-        Set Location to 74 713
+        Set Location to 74 425
         Set Label to ""
         Set peAnchors to anTopRight
     End_Object
 
     Object oBody is a cTextEdit
         Set Size to 68 302
-        Set Location to 98 535
+        Set Location to 98 247
         Set Label to "Body:"
         Set peAnchors to anTopRight
     End_Object
 
     Object oHtmlBody is a cWebView2Browser
         Set Size to 68 302
-        Set Location to 98 535
+        Set Location to 98 247
         Set Label to "Body:"
         Set Label_Justification_Mode to JMode_Top
         Set Label_Col_Offset to 0
@@ -278,8 +280,8 @@ Object oEvents is a dbView
     End_Object
 
     Object oAttendees is a cCJGrid
-        Set Size to 34 302
-        Set Location to 168 535
+        Set Size to 36 302
+        Set Location to 168 247
         Set pbReadOnly to True
         Set peAnchors to anTopBottomRight
 
@@ -316,7 +318,7 @@ Object oEvents is a dbView
 
     Object oAttachments is a cCJGrid
         Set Size to 75 176
-        Set Location to 206 534
+        Set Location to 208 246
         Set peAnchors to anBottomRight
         Set pbReadOnly to True
 
@@ -420,7 +422,7 @@ Object oEvents is a dbView
 
     Object oTextAtt is a cTextEdit
         Set Size to 74 122
-        Set Location to 208 716
+        Set Location to 210 428
         Set peAnchors to anBottomRight
         Set Visible_State to False
         Set Read_Only_State to True
@@ -428,7 +430,7 @@ Object oEvents is a dbView
 
     Object oBMPAtt is a BitmapContainer
         Set Size to 74 109
-        Set Location to 208 729
+        Set Location to 210 441
         Set peAnchors to anBottomRight
         Set Visible_State to False
         Set Bitmap_Style to Bitmap_Stretch

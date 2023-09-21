@@ -19,6 +19,12 @@ Object oContactsPrompt is a ModalPanel
     Property stContactsEmail ptContacts
     Property stRecip         ptRecip
     
+    Procedure Page_Object Boolean bPage
+        Forward Send Page_Object bPage
+        
+        Set Icon to "UIG.ico"
+    End_Procedure
+    
     Object oContacts is a cCJGrid
         Set Size to 126 239
         Set Location to 7 4

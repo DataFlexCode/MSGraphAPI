@@ -121,7 +121,7 @@ Class cMSGraphAPI is a cObject
     End_Function
     
     // See: https://learn.microsoft.com/en-us/graph/api/attachment-get?view=graph-rest-1.0&tabs=http
-    Function Attachment String sMsgID String sAttID String sParams Returns Handle
+    Function GetAttachment String sMsgID String sAttID String sParams Returns Handle
         Handle hoResp
         String sPath
         
@@ -144,5 +144,4 @@ Class cMSGraphAPI is a cObject
         Function_Return hoResp
     End_Function
     
-        
 End_Class

@@ -34,9 +34,10 @@ Object oEMail is a dbView
     Property stMsgItem[] patMsgs
 
     Set Border_Style to Border_Thick
-    Set Size to 269 568
-    Set Location to 2 2
+    Set Size to 257 531
+    Set Location to 1 1
     Set Label to "EMail"
+    Set Icon to "UIG.ico"
     
     Procedure SetLoginState
         Boolean bLoggedIn
@@ -154,7 +155,7 @@ Object oEMail is a dbView
 
     Object oComposeBtn is a Button
         Set Size to 14 64
-        Set Location to 3 394
+        Set Location to 3 357
         Set Label to "Compose New"
         Set peAnchors to anTopRight
         Set Enabled_State to False
@@ -166,7 +167,7 @@ Object oEMail is a dbView
     End_Object
 
     Object oRefreshBtn is a Button
-        Set Location to 3 513
+        Set Location to 3 476
         Set Label to "Refresh"
         Set peAnchors to anTopRight
     
@@ -358,7 +359,7 @@ Object oEMail is a dbView
         If ((sMsgID = "") or (sAttID = "")) ;
             Procedure_Return
         
-        Get Attachment of (oGraph(Self)) sMsgID sAttID "" to hoResp
+        Get GetAttachment of (oGraph(Self)) sMsgID sAttID "" to hoResp
         
         If not hoResp ;
             Procedure_Return
@@ -491,7 +492,7 @@ Object oEMail is a dbView
     End_Object
 
     Object oMailGrid is a cCJGrid
-        Set Size to 126 498
+        Set Size to 126 461
         Set Location to 21 68
         Set pbReadOnly to True
         Set peAnchors to anTopLeftRight
@@ -510,12 +511,12 @@ Object oEMail is a dbView
         End_Object
 
         Object oRcvdCol is a cCJGridColumn
-            Set piWidth to 40
+            Set piWidth to 60
             Set psCaption to "Received"
         End_Object
 
         Object oHasAtts is a cCJGridColumn
-            Set piWidth to 6
+            Set piWidth to 10
             Set psCaption to (Character(128206))
             Set peTextAlignment to xtpAlignmentCenter
             Set peHeaderAlignment to xtpAlignmentCenter
@@ -564,7 +565,7 @@ Object oEMail is a dbView
     End_Object
     
     Object oFrom is a Form
-        Set Size to 12 352
+        Set Size to 12 315
         Set Location to 151 37
         Set Label to "From:"
         Set Label_Justification_Mode to JMode_Right
@@ -573,7 +574,7 @@ Object oEMail is a dbView
     End_Object
 
     Object oTo is a Form
-        Set Size to 12 352
+        Set Size to 12 315
         Set Location to 165 37
         Set Label to "To:"
         Set Label_Justification_Mode to JMode_Right
@@ -582,7 +583,7 @@ Object oEMail is a dbView
     End_Object
 
     Object oCC is a Form
-        Set Size to 12 352
+        Set Size to 12 315
         Set Location to 179 37
         Set Label to "CC:"
         Set Label_Justification_Mode to JMode_Right
@@ -591,7 +592,7 @@ Object oEMail is a dbView
     End_Object
     
     Object oSubject is a Form
-        Set Size to 12 352
+        Set Size to 12 315
         Set Location to 193 37
         Set Label to "Subject:"
         Set Label_Justification_Mode to JMode_Right
@@ -601,7 +602,7 @@ Object oEMail is a dbView
 
     Object oAttachments is a cCJGrid
         Set Size to 39 170
-        Set Location to 151 395
+        Set Location to 151 358
         Set peAnchors to anTopRight
         Set pbReadOnly to True
 
@@ -679,13 +680,13 @@ Object oEMail is a dbView
     End_Object
 
     Object oMsgTxt is a cTextEdit
-        Set Size to 49 562
+        Set Size to 37 525
         Set Location to 217 3
         Set peAnchors to anAll
     End_Object
 
     Object oMsgHtml is a cWebView2Browser
-        Set Size to 49 562
+        Set Size to 37 525
         Set Location to 217 3
         Set Label_Justification_Mode to JMode_Top
         Set Label_Col_Offset to 0
@@ -713,7 +714,7 @@ Object oEMail is a dbView
 
     Object oRcvdDT is a Form
         Set Size to 12 69
-        Set Location to 193 496
+        Set Location to 193 459
         Set Label to "Received:"
         Set Label_Justification_Mode to JMode_Right
         Set Label_Col_Offset to 5

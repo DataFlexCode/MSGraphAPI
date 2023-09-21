@@ -24,6 +24,12 @@ Object oComposeMail is a ModalPanel
     Set Location to 2 2
     Set Border_Style To Border_Thick
     Set Locate_Mode to CENTER_ON_PANEL
+
+    Procedure Page_Object Boolean bPage
+        Forward Send Page_Object bPage
+        
+        Set Icon to "UIG.ico"
+    End_Procedure
     
     Property stMailMessagesattachments[] patAttachments
     Property Integer[] paiAttSizes

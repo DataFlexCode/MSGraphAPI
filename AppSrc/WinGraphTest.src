@@ -24,7 +24,8 @@ Use oDEOEditContextMenu17.pkg
 Object oMain is a Panel
     Set Label To "Windows Graph Test"
     Set Location to 4 3
-    Set Size to 300 450
+    Set Size to 316 462
+    Set Icon to "UIG.ico"
 
     Object oCommandBarSystem is a cCJCommandBarSystem
         Set pbTimerUpdate to True
@@ -214,98 +215,101 @@ Object oMain is a Panel
 
         End_Object
 
-        Object oFindToolBar is a cCJToolbar
-            Set psTitle to "Finding Toolbar"
+// Lose the toolbar for the demo for screen real-estate reasons, but
+// leave it here commented out, just in case we want it again.  ;-)
 
-            Object oFindFirstTool is a cCJFindFirstMenuItem
-            End_Object
-
-            Object oFindPreviousTool is a cCJFindPreviousMenuItem
-            End_Object
-
-            Object oFindMenuTool is a cCJFindMenuItem
-            End_Object
-
-            Object oFindNextTool is a cCJFindNextMenuItem
-            End_Object
-
-            Object oFindLastTool is a cCJFindLastMenuItem
-            End_Object
-
-            Object oPromptToolItem is a cCJPromptMenuItem
-                Set pbControlBeginGroup to True
-            End_Object
-
-        End_Object
-
-        Object oFileToolBar is a cCJToolbar
-            Set psTitle to "Data Entry Toolbar"
-
-            Object oClearToolItem is a cCJClearMenuItem
-                Set peControlStyle to xtpButtonIconAndCaption
-            End_Object
-
-            Object oClearAllToolItem2 is a cCJClearAllMenuItem
-                Set peControlStyle to xtpButtonIconAndCaption
-            End_Object
-
-            Object oSaveToolItem is a cCJSaveMenuItem
-                Set peControlStyle to xtpButtonIconAndCaption
-                Set pbControlBeginGroup to True
-            End_Object
-
-            Object oDeleteToolItem is a cCJDeleteMenuItem
-                Set peControlStyle to xtpButtonIconAndCaption
-            End_Object
-
-        End_Object
-
-        Object oEditToolBar is a cCJToolbar
-            Set psTitle to "Edit Toolbar"
-
-            Object oCutToolbarItem is a cCJCutMenuItem
-            End_Object
-
-            Object oCopyToolbarItem is a cCJCopyMenuItem
-            End_Object
-
-            Object oPasteToolbarItem is a cCJPasteMenuItem
-            End_Object
-
-            Object oDeleteEditToolbarItem is a cCJDeleteEditMenuItem
-                Set pbControlBeginGroup to True
-            End_Object
-
-        End_Object
-
-        Object oRememberToolbar is a cCJToolbar
-            Set psTitle to C_$Remember
-
-            Object oRememberItems is a cCJMenuItem
-
-                Set peControlType to xtpControlPopup
-                Set peControlStyle to xtpButtonCaption
-                Set psCaption to C_$Remember
-                
-                Object oMenuItem is a cCJRememberFieldMenuItem
-                    Set peControlStyle to xtpButtonIconAndCaption
-                End_Object
-                
-                Object oMenuItem is a cCJRememberLastFieldMenuItem
-                    Set peControlStyle to xtpButtonIconAndCaption
-                End_Object
-                
-                Object oMenuItem is a cCJUnRememberFieldMenuItem
-                    Set peControlStyle to xtpButtonIconAndCaption
-                End_Object
-                
-                Object oMenuItem is a cCJUnRememberFieldAllMenuItem
-                    Set peControlStyle to xtpButtonIconAndCaption
-                End_Object
-
-            End_Object
-            
-        End_Object
+//        Object oFindToolBar is a cCJToolbar
+//            Set psTitle to "Finding Toolbar"
+//
+//            Object oFindFirstTool is a cCJFindFirstMenuItem
+//            End_Object
+//
+//            Object oFindPreviousTool is a cCJFindPreviousMenuItem
+//            End_Object
+//
+//            Object oFindMenuTool is a cCJFindMenuItem
+//            End_Object
+//
+//            Object oFindNextTool is a cCJFindNextMenuItem
+//            End_Object
+//
+//            Object oFindLastTool is a cCJFindLastMenuItem
+//            End_Object
+//
+//            Object oPromptToolItem is a cCJPromptMenuItem
+//                Set pbControlBeginGroup to True
+//            End_Object
+//
+//        End_Object
+//
+//        Object oFileToolBar is a cCJToolbar
+//            Set psTitle to "Data Entry Toolbar"
+//
+//            Object oClearToolItem is a cCJClearMenuItem
+//                Set peControlStyle to xtpButtonIconAndCaption
+//            End_Object
+//
+//            Object oClearAllToolItem2 is a cCJClearAllMenuItem
+//                Set peControlStyle to xtpButtonIconAndCaption
+//            End_Object
+//
+//            Object oSaveToolItem is a cCJSaveMenuItem
+//                Set peControlStyle to xtpButtonIconAndCaption
+//                Set pbControlBeginGroup to True
+//            End_Object
+//
+//            Object oDeleteToolItem is a cCJDeleteMenuItem
+//                Set peControlStyle to xtpButtonIconAndCaption
+//            End_Object
+//
+//        End_Object
+//
+//        Object oEditToolBar is a cCJToolbar
+//            Set psTitle to "Edit Toolbar"
+//
+//            Object oCutToolbarItem is a cCJCutMenuItem
+//            End_Object
+//
+//            Object oCopyToolbarItem is a cCJCopyMenuItem
+//            End_Object
+//
+//            Object oPasteToolbarItem is a cCJPasteMenuItem
+//            End_Object
+//
+//            Object oDeleteEditToolbarItem is a cCJDeleteEditMenuItem
+//                Set pbControlBeginGroup to True
+//            End_Object
+//
+//        End_Object
+//
+//        Object oRememberToolbar is a cCJToolbar
+//            Set psTitle to C_$Remember
+//
+//            Object oRememberItems is a cCJMenuItem
+//
+//                Set peControlType to xtpControlPopup
+//                Set peControlStyle to xtpButtonCaption
+//                Set psCaption to C_$Remember
+//                
+//                Object oMenuItem is a cCJRememberFieldMenuItem
+//                    Set peControlStyle to xtpButtonIconAndCaption
+//                End_Object
+//                
+//                Object oMenuItem is a cCJRememberLastFieldMenuItem
+//                    Set peControlStyle to xtpButtonIconAndCaption
+//                End_Object
+//                
+//                Object oMenuItem is a cCJUnRememberFieldMenuItem
+//                    Set peControlStyle to xtpButtonIconAndCaption
+//                End_Object
+//                
+//                Object oMenuItem is a cCJUnRememberFieldAllMenuItem
+//                    Set peControlStyle to xtpButtonIconAndCaption
+//                End_Object
+//
+//            End_Object
+//            
+//        End_Object
         
         Object oStatusBar is a cCJStatusBar
 
@@ -417,14 +421,16 @@ Object oMain is a Panel
         Use EMail.vw
 
         Procedure Activate_About
-            Send DoAbout "" "" "" "" ""
+            Send DoAbout "MS Graph Demo" ;
+                         "1.0" ;
+                         "Unicorn InterGlobal Ltd, UK" ;
+                         "Mike Peat" ;
+                         "UILOGO_SMALL.bmp"
         End_Procedure
 
     End_Object
 
 End_Object
 
-//Send Activate_oEvents of (oClientArea(oMain))
-//Send Activate_oEMail  of (oClientArea(oMain))
 Send Login of (oOAuth2(oClientArea(oMain)))
 Start_UI
