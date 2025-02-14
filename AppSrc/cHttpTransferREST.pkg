@@ -76,7 +76,10 @@ Class cHttpTransferREST is a cHttpTransfer
         Integer  iIdx iEnd
         
         Get pasHeaderNames to asNames
-        Move (SearchArray(asNames, sName)) to iIdx
+        If (SizeOfArray(asNames)) ;
+            Move (SearchArray(sName, asNames)) to iIdx
+        Else ;
+            Move -1 to iIdx
         
         If (iIdx = -1) Begin  // Not already in array
             Move (SizeOfArray(asNames)) to iEnd
@@ -147,7 +150,7 @@ Class cHttpTransferREST is a cHttpTransfer
             Decrement iHdrs
             
             For i from 0 to iHdrs
-                Get AddHeader asHdrNames[i] asHdrVals to iOK
+                Get AddHeader asHdrNames[i] asHdrVals[i] to iOK
             Loop
             
         End
